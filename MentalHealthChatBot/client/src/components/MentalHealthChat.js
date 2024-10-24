@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import axios from "axios";
 import { motion } from "framer-motion";
+import { Mic, MicOff } from "lucide-react";
 import logo from "../assets/white-logo.png";
 import BackgroundSVG from "../components/BackgroundSVG";
 
@@ -8,7 +9,9 @@ const MentalHealthChat = () => {
   const [messages, setMessages] = useState([]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
+  const [isListening, setIsListening] = useState(false);
   const messagesEndRef = useRef(null);
+  const recognitionRef = useRef(null);
   
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -18,11 +21,10 @@ const MentalHealthChat = () => {
     scrollToBottom();
   }, [messages]);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!inputMessage.trim()) return;
+  const handleSendMessage = async (message) => {
+    if (!message.trim()) return;
 
-    const userMessage = inputMessage.trim();
+    const userMessage = message.trim();
     setInputMessage("");
     
     // Add user message to chat
@@ -44,6 +46,66 @@ const MentalHealthChat = () => {
       }]);
     } finally {
       setIsTyping(false);
+    }
+  };
+
+  // Handle form submit for typed messages
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    handleSendMessage(inputMessage);
+  };
+
+  useEffect(() => {
+    // Initialize speech recognition
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      const SpeechRecognition = window.webkitSpeechRecognition || window.SpeechRecognition;
+      recognitionRef.current = new SpeechRecognition();
+      recognitionRef.current.continuous = true;
+      recognitionRef.current.interimResults = true;
+
+      recognitionRef.current.onresult = (event) => {
+        const transcript = Array.from(event.results)
+          .map(result => result[0])
+          .map(result => result.transcript)
+          .join('');
+        
+        setInputMessage(transcript);
+      };
+
+      recognitionRef.current.onerror = (event) => {
+        console.error('Speech recognition error:', event.error);
+        setIsListening(false);
+      };
+
+      recognitionRef.current.onend = () => {
+        setIsListening(false);
+        // Send the message when recording stops if there's content
+        if (inputMessage.trim()) {
+          handleSendMessage(inputMessage);
+        }
+      };
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        recognitionRef.current.stop();
+      }
+    };
+  }, [inputMessage]); // Added inputMessage as dependency to access latest value
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) {
+      alert("Speech recognition is not supported in your browser.");
+      return;
+    }
+
+    if (isListening) {
+      recognitionRef.current.stop();
+      setIsListening(false);
+    } else {
+      setInputMessage(""); // Clear any existing input when starting new recording
+      recognitionRef.current.start();
+      setIsListening(true);
     }
   };
 
@@ -102,7 +164,7 @@ const MentalHealthChat = () => {
           </div>
 
           {/* Input Form */}
-          <form onSubmit={handleSendMessage} className="flex space-x-2">
+          <form onSubmit={handleSubmit} className="flex space-x-2">
             <input
               type="text"
               value={inputMessage}
@@ -110,6 +172,22 @@ const MentalHealthChat = () => {
               placeholder="Type your message here..."
               className="flex-1 p-2 rounded-lg bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
             />
+            <button
+              type="button"
+              onClick={toggleListening}
+              className={`p-2 rounded-lg transition-colors ${
+                isListening 
+                  ? 'bg-red-600 hover:bg-red-700' 
+                  : 'bg-green-600 hover:bg-green-700'
+              }`}
+              title={isListening ? "Stop recording" : "Start recording"}
+            >
+              {isListening ? (
+                <MicOff className="w-6 h-6" />
+              ) : (
+                <Mic className="w-6 h-6" />
+              )}
+            </button>
             <button
               type="submit"
               className="bg-blue-600 text-white px-3 py-2 rounded-lg hover:bg-blue-700 transition-colors"
