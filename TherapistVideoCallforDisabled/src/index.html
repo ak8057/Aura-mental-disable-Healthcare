@@ -6,8 +6,8 @@
         
         <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css">
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
-        <link rel='stylesheet' href='assets/css/app.css'>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="./assets/css/app.css">
         
         <style>
             :root {
@@ -225,49 +225,156 @@
                 overflow: hidden;
             }
 
-            .control-btn::after {
-                content: '';
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                background: radial-gradient(circle, rgba(115, 55, 214, 0.4) 0%, transparent 70%);
-                opacity: 0;
-                transition: opacity 0.3s ease;
+            /* New active state for control buttons */
+            .control-btn.active {
+                background: rgba(115, 55, 214, 0.8);
+                box-shadow: 0 0 15px rgba(115, 55, 214, 0.5);
+                transform: scale(1.1);
             }
 
-            .control-btn:hover::after {
+            .control-btn.active i {
+                animation: pulse 1.5s infinite;
+            }
+
+            /* Enhanced transcript container */
+            .transcript-container {
+                position: fixed;
+                bottom: 100px;
+                left: 50%;
+                transform: translateX(-50%);
+                width: 90%;
+                max-width: 800px;
+                background: rgba(21, 28, 43, 0.98);
+                backdrop-filter: blur(15px);
+                border-radius: 16px;
+                padding: 20px;
+                z-index: 9999;
+                border: 2px solid rgba(115, 55, 214, 0.4);
+                max-height: 300px;
+                overflow-y: auto;
+                box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+                color: white;
+                transition: all 0.3s ease;
+            }
+
+            /* New styles for transcript messages */
+            .transcript-message {
+                margin-bottom: 12px;
+                padding: 10px 15px;
+                border-radius: 12px;
+                background: rgba(115, 55, 214, 0.15);
+                display: flex;
+                align-items: flex-start;
+                animation: fadeIn 0.3s ease-out;
+                border: 1px solid rgba(115, 55, 214, 0.2);
+                position: relative;
+                overflow: hidden;
+            }
+
+            .transcript-message::before {
+                content: '';
+                position: absolute;
+                top: 0;
+                left: 0;
+                width: 4px;
+                height: 100%;
+                background: rgba(115, 55, 214, 0.5);
+            }
+
+            .transcript-user {
+                font-weight: 600;
+                color: #7337D6;
+                margin-right: 12px;
+                flex-shrink: 0;
+                position: relative;
+                padding-right: 12px;
+            }
+
+            .transcript-user::after {
+                content: '•';
+                position: absolute;
+                right: 0;
+                color: rgba(115, 55, 214, 0.5);
+            }
+
+            .transcript-text {
+                color: white;
+                word-break: break-word;
+                line-height: 1.5;
+            }
+
+            /* Status indicator */
+            .status-indicator {
+                position: fixed;
+                top: 80px;
+                left: 50%;
+                transform: translateX(-50%);
+                background: rgba(21, 28, 43, 0.9);
+                padding: 8px 16px;
+                border-radius: 20px;
+                color: white;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                opacity: 0;
+                transition: opacity 0.3s ease;
+                z-index: 9999;
+            }
+
+            .status-indicator.active {
                 opacity: 1;
             }
 
-            .control-btn:hover {
-                transform: translateY(-2px) scale(1.1);
-                box-shadow: 0 5px 15px rgba(115, 55, 214, 0.3);
+            .status-dot {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background: #4CAF50;
+                animation: pulse 1.5s infinite;
             }
 
-            /* Enhanced Chat Panel */
-            #chat-pane {
-                background: rgba(21, 28, 43, 0.95) !important;
-                backdrop-filter: blur(20px);
-                border-left: 1px solid rgba(115, 55, 214, 0.2);
-                border-radius: 16px 0 0 16px;
-                animation: slideInRight 0.5s ease-out;
+            @keyframes pulse {
+                0% { transform: scale(1); opacity: 1; }
+                50% { transform: scale(1.2); opacity: 0.7; }
+                100% { transform: scale(1); opacity: 1; }
             }
 
-            .chat-message {
+            /* Instructions panel */
+            .instructions-panel {
+                position: fixed;
+                top: 100px;
+                right: 20px;
+                width: 300px;
+                background: rgba(21, 28, 43, 0.95);
+                backdrop-filter: blur(10px);
+                border-radius: 16px;
+                padding: 20px;
+                border: 1px solid rgba(115, 55, 214, 0.3);
+                color: white;
+                z-index: 9998;
+                transform: translateX(320px);
+                transition: transform 0.3s ease;
+            }
+
+            .instructions-panel.active {
+                transform: translateX(0);
+            }
+
+            .instruction-step {
+                margin-bottom: 15px;
+                padding: 10px;
+                border-radius: 8px;
                 background: rgba(115, 55, 214, 0.1);
-                border-radius: 12px;
-                padding: 1rem;
-                margin-bottom: 1rem;
                 border: 1px solid rgba(115, 55, 214, 0.2);
-                animation: fadeIn 0.3s ease-out;
             }
 
-            /* Animation Keyframes */
-            @keyframes fadeIn {
-                from { opacity: 0; }
-                to { opacity: 1; }
+            .instruction-step i {
+                color: #7337D6;
+                margin-right: 8px;
             }
 
+            /* Enhanced animations */
             @keyframes fadeInUp {
                 from {
                     opacity: 0;
@@ -278,74 +385,9 @@
                     transform: translateY(0);
                 }
             }
-
-            @keyframes fadeInDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-20px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
-            }
-
-            @keyframes scaleIn {
-                from {
-                    opacity: 0;
-                    transform: scale(0.9);
-                }
-                to {
-                    opacity: 1;
-                    transform: scale(1);
-                }
-            }
-
-            @keyframes slideInRight {
-                from {
-                    transform: translateX(100%);
-                }
-                to {
-                    transform: translateX(0);
-                }
-            }
-
-            /* Ripple Effect */
-            .ripple {
-                position: relative;
-                overflow: hidden;
-            }
-
-            .ripple::after {
-                content: '';
-                position: absolute;
-                width: 100%;
-                height: 100%;
-                top: 0;
-                left: 0;
-                background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 60%);
-                transform: scale(0);
-                transition: transform 0.3s ease-out;
-            }
-
-            .ripple:active::after {
-                transform: scale(2);
-                opacity: 0;
-                transition: 0s;
-            }
         </style>
-
-        <!-- Scripts remain unchanged -->
-        <script src='/socket.io/socket.io.js'></script>
-        <script type="module" src='assets/js/rtc.js'></script>
-        <script type="module" src='assets/js/events.js'></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.3.0/adapter.min.js"></script>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
-        <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js'></script>
-        <script src='https://cdn.rawgit.com/yahoo/xss-filters/master/dist/xss-filters.js'></script>
-        <script src='assets/js/autolink.js'></script>
     </head>
-
+    
     <body>
         <!-- Animated Background -->
         <div class="bg-animation-container">
@@ -361,7 +403,6 @@
             <div class="glow glow-2"></div>
         </div>
 
-        <!-- Rest of the HTML structure remains the same but with added glass-effect and ripple classes -->
         <!-- Recording Modal -->
         <div class="custom-modal" id='recording-options-modal'>
             <div class="custom-modal-content glass-effect">
@@ -389,8 +430,8 @@
 
         <!-- Navbar -->
         <nav class="navbar fixed-top d-print-none">
-            <div class="text-white h5 mb-0">Video Conference</div>
-            <div class="pull-right room-comm " hidden>
+            <div class="text-white h5 mb-0">Video Conference </div>
+            <div class="pull-right room-comm" hidden>
                 <span class="text-white mr-4">
                     Room ID: <span class="badge badge-modern" id='randomNumber'></span>
                 </span>
@@ -470,7 +511,12 @@
         <!-- Main Room Container -->
         <div class="container-fluid room-comm" hidden>
             <div class="row">
-                <video class="local-video mirror-mode" id='local' volume='0' autoplay muted></video>
+                <div class="video-wrapper">
+                    <video class="local-video mirror-mode" id='local' volume='0' autoplay muted></video>
+                    <div class="caption-container">
+                        <div class="caption-text" id="local-caption"></div>
+                    </div>
+                </div>
             </div>
             
             <div class="row">
@@ -496,5 +542,180 @@
                 </div>
             </div>
         </div>
+        <!-- Updated Transcript Container - Move it before closing body tag -->
+        <div class="transcript-container" id="transcript-container">
+            <!-- Initial message to show container is working -->
+            <div class="transcript-message">
+                <span class="transcript-user">System:</span>
+                <span class="transcript-text">Transcription ready. Start speaking when unmuted.</span>
+            </div>
+        </div>
+
+        <!-- Scripts -->
+        <script src='/socket.io/socket.io.js'></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/webrtc-adapter/7.3.0/adapter.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.24.0/moment.min.js"></script>
+        <script src='https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.8/FileSaver.min.js'></script>
+        <script src='https://cdn.rawgit.com/yahoo/xss-filters/master/dist/xss-filters.js'></script>
+
+        <!-- Speech Recognition Script -->
+        <script>
+            document.addEventListener('DOMContentLoaded', () => {
+                // Check if speech recognition is supported
+                if (!('webkitSpeechRecognition' in window)) {
+                    console.error('Speech recognition not supported');
+                    return;
+                }
+
+                let recognition = null;
+                let isRecognitionActive = false;
+
+                function initializeRecognition() {
+                    recognition = new webkitSpeechRecognition();
+                    recognition.continuous = true;
+                    recognition.interimResults = true;
+                    recognition.lang = 'en-US'; // Set language explicitly
+
+                    const transcriptContainer = document.getElementById('transcript-container');
+
+                    function addTranscriptMessage(username, text) {
+                        const messageDiv = document.createElement('div');
+                        messageDiv.className = 'transcript-message';
+                        
+                        const userSpan = document.createElement('span');
+                        userSpan.className = 'transcript-user';
+                        userSpan.textContent = username + ':';
+                        
+                        const textSpan = document.createElement('span');
+                        textSpan.className = 'transcript-text';
+                        textSpan.textContent = ' ' + text;
+                        
+                        messageDiv.appendChild(userSpan);
+                        messageDiv.appendChild(textSpan);
+                        transcriptContainer.appendChild(messageDiv);
+                        
+                        transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+                        
+                        while (transcriptContainer.children.length > 50) {
+                            transcriptContainer.removeChild(transcriptContainer.firstChild);
+                        }
+                    }
+
+                    recognition.onstart = () => {
+                        console.log('Speech recognition started');
+                        isRecognitionActive = true;
+                        addTranscriptMessage('System', 'Speech recognition active - Start speaking');
+                    };
+
+                    recognition.onend = () => {
+                        console.log('Speech recognition ended');
+                        isRecognitionActive = false;
+                        // Restart recognition if it was supposed to be active
+                        if (!document.getElementById('local').muted) {
+                            recognition.start();
+                        }
+                    };
+
+                    recognition.onresult = (event) => {
+                        const results = event.results;
+                        
+                        for (let i = event.resultIndex; i < results.length; i++) {
+                            if (results[i].isFinal) {
+                                const transcript = results[i][0].transcript;
+                                if (transcript.trim().length > 0) {  // Only add non-empty transcripts
+                                    addTranscriptMessage(window.username || 'You', transcript);
+                                    
+                                    // Emit to other users
+                                    if (window.socket) {
+                                        window.socket.emit('caption', {
+                                            caption: transcript,
+                                            sender: window.username || 'You'
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                    };
+
+                    recognition.onerror = (event) => {
+                        console.error('Speech recognition error:', event.error);
+                        addTranscriptMessage('System', 'Error: ' + event.error);
+                        
+                        // Restart recognition on error if it was supposed to be active
+                        if (!document.getElementById('local').muted && event.error !== 'no-speech') {
+                            setTimeout(() => {
+                                recognition.start();
+                            }, 1000);
+                        }
+                    };
+
+                    return recognition;
+                }
+
+                // Initialize speech recognition
+                recognition = initializeRecognition();
+
+                // Handle mute/unmute
+                const toggleMuteButton = document.getElementById('toggle-mute');
+                if (toggleMuteButton) {
+                    toggleMuteButton.addEventListener('click', () => {
+                        const localVideo = document.getElementById('local');
+                        
+                        // Toggle mute state
+                        localVideo.muted = !localVideo.muted;
+                        
+                        if (!localVideo.muted) {
+                            // Start recognition if unmuted
+                            try {
+                                recognition.start();
+                                console.log('Starting speech recognition');
+                            } catch (e) {
+                                console.log('Restarting recognition due to error:', e);
+                                recognition = initializeRecognition();
+                                recognition.start();
+                            }
+                        } else {
+                            // Stop recognition if muted
+                            try {
+                                recognition.stop();
+                                console.log('Stopping speech recognition');
+                            } catch (e) {
+                                console.error('Error stopping recognition:', e);
+                            }
+                        }
+                    });
+                }
+
+                // Handle incoming captions from other users
+                if (window.socket) {
+                    window.socket.on('caption', (data) => {
+                        const transcriptContainer = document.getElementById('transcript-container');
+                        if (transcriptContainer) {
+                            const messageDiv = document.createElement('div');
+                            messageDiv.className = 'transcript-message';
+                            
+                            const userSpan = document.createElement('span');
+                            userSpan.className = 'transcript-user';
+                            userSpan.textContent = data.sender + ':';
+                            
+                            const textSpan = document.createElement('span');
+                            textSpan.className = 'transcript-text';
+                            textSpan.textContent = ' ' + data.caption;
+                            
+                            messageDiv.appendChild(userSpan);
+                            messageDiv.appendChild(textSpan);
+                            transcriptContainer.appendChild(messageDiv);
+                            
+                            transcriptContainer.scrollTop = transcriptContainer.scrollHeight;
+                        }
+                    });
+                }
+            });
+        </script>
+
+        <!-- Your existing rtc.js and events.js scripts -->
+        <script type="module" src='assets/js/rtc.js'></script>
+        <script type="module" src='assets/js/events.js'></script>
+        <script src='assets/js/autolink.js'></script>
     </body>
 </html>
