@@ -8,6 +8,12 @@
         <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css">
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
         <link rel="stylesheet" href="./assets/css/app.css">
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Sign Language Detection</title>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+        <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/handpose"></script>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
         
         <style>
             :root {
@@ -385,6 +391,89 @@
                     transform: translateY(0);
                 }
             }
+            body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: #f0f2f5;
+        }
+
+        .sign-language-container {
+            position: fixed;
+            bottom: 100px;
+            right: 20px;
+            width: 300px;
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+        }
+
+        .sign-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .sign-header h4 {
+            margin: 0;
+            font-size: 1.1rem;
+            color: #1a1a1a;
+        }
+
+        .toggle-button {
+            background: #7337d6;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.3s;
+        }
+
+        .toggle-button:hover {
+            background: #5925ac;
+        }
+
+        .toggle-button i {
+            font-size: 1rem;
+        }
+
+        #sign-canvas {
+            width: 100%;
+            height: 200px;
+            border-radius: 8px;
+            background: #1a1a1a;
+            margin-bottom: 12px;
+        }
+
+        .sign-alert {
+            background: #f8f9fa;
+            border: 1px solid #dee2e6;
+            border-radius: 6px;
+            padding: 12px;
+            margin-top: 12px;
+        }
+
+        .sign-alert-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #1a1a1a;
+        }
+
+        .sign-alert-description {
+            color: #4a5568;
+            font-size: 0.9rem;
+        }
+
+        .hidden {
+            display: none;
+        }
         </style>
     </head>
     
@@ -550,6 +639,20 @@
                 <span class="transcript-text">Transcription ready. Start speaking when unmuted.</span>
             </div>
         </div>
+        <div class="sign-language-container">
+            <div class="sign-header">
+                <h4>Sign Language Detection</h4>
+                <button class="toggle-button" id="toggleDetection">
+                    <i class="fas fa-hand"></i>
+                    <span>Start</span>
+                </button>
+            </div>
+            <canvas id="sign-canvas" class="hidden"></canvas>
+            <div class="sign-alert">
+                <div class="sign-alert-title" id="modelStatus">Loading...</div>
+                <div class="sign-alert-description" id="detectedSign">No sign detected</div>
+            </div>
+        </div>
 
         <!-- Scripts -->
         <script src='/socket.io/socket.io.js'></script>
@@ -710,6 +813,170 @@
                         }
                     });
                 }
+            });
+        </script>
+        <script>
+            document.addEventListener('DOMContentLoaded', async () => {
+                const canvas = document.getElementById('sign-canvas');
+                const toggleButton = document.getElementById('toggleDetection');
+                const modelStatus = document.getElementById('modelStatus');
+                const detectedSignElement = document.getElementById('detectedSign');
+                let handposeModel = null;
+                let isActive = false;
+                let requestId = null;
+    
+                const signs = {
+                    'HELLO': {
+                        description: 'Flat hand near forehead, moved away in an arc',
+                        check: (landmarks) => {
+                            const palm = landmarks[0];
+                            const fingertips = [landmarks[4], landmarks[8], landmarks[12], landmarks[16], landmarks[20]];
+                            const allFingersExtended = fingertips.every(tip => tip[1] < palm[1]);
+                            const handNearHead = palm[1] < 200;
+                            return allFingersExtended && handNearHead;
+                        }
+                    },
+                    'THANK YOU': {
+                        description: 'Fingers together, touch chin and move forward',
+                        check: (landmarks) => {
+                            const fingertips = [landmarks[8], landmarks[12], landmarks[16], landmarks[20]];
+                            const areFingersTogether = fingertips.every((tip, i) => {
+                                if (i === 0) return true;
+                                const prevTip = fingertips[i - 1];
+                                return Math.abs(tip[0] - prevTip[0]) < 20 && Math.abs(tip[1] - prevTip[1]) < 20;
+                            });
+                            const isChinLevel = landmarks[0][1] > 300 && landmarks[0][1] < 400;
+                            return areFingersTogether && isChinLevel;
+                        }
+                    },
+                    'YES': {
+                        description: 'Fist with thumb up',
+                        check: (landmarks) => {
+                            const thumb = landmarks[4];
+                            const fingerTips = [landmarks[8], landmarks[12], landmarks[16], landmarks[20]];
+                            const thumbUp = thumb[1] < landmarks[2][1];
+                            const fingersDown = fingerTips.every(tip => tip[1] > landmarks[0][1]);
+                            return thumbUp && fingersDown;
+                        }
+                    },
+                    'NO': {
+                        description: 'Index finger wagging side to side',
+                        check: (landmarks) => {
+                            const indexTip = landmarks[8];
+                            const otherFingers = [landmarks[12], landmarks[16], landmarks[20]];
+                            const indexUp = indexTip[1] < landmarks[5][1];
+                            const othersFolded = otherFingers.every(tip => tip[1] > landmarks[0][1]);
+                            return indexUp && othersFolded;
+                        }
+                    },
+                    'PLEASE': {
+                        description: 'Flat hand circling on chest',
+                        check: (landmarks) => {
+                            const palm = landmarks[0];
+                            const fingertips = [landmarks[8], landmarks[12], landmarks[16], landmarks[20]];
+                            const flatHand = fingertips.every(tip => Math.abs(tip[1] - palm[1]) < 30);
+                            const atChestLevel = palm[1] > 250 && palm[1] < 350;
+                            return flatHand && atChestLevel;
+                        }
+                    }
+                };
+    
+                async function initializeHandpose() {
+                    try {
+                        handposeModel = await handpose.load();
+                        modelStatus.textContent = 'Ready';
+                        toggleButton.disabled = false;
+                    } catch (error) {
+                        modelStatus.textContent = 'Error loading model';
+                        console.error('Error loading HandPose model:', error);
+                    }
+                }
+    
+                async function detectSigns() {
+                    if (!isActive || !handposeModel || !canvas) return;
+    
+                    const video = document.querySelector('video');
+                    if (!video) return;
+    
+                    try {
+                        const hands = await handposeModel.estimateHands(video);
+                        
+                        if (hands.length > 0) {
+                            const landmarks = hands[0].landmarks;
+                            
+                            // Draw hand landmarks
+                            const ctx = canvas.getContext('2d');
+                            ctx.clearRect(0, 0, canvas.width, canvas.height);
+                            
+                            // Draw connections
+                            ctx.strokeStyle = '#7337d6';
+                            ctx.lineWidth = 2;
+                            for (let i = 0; i < landmarks.length - 1; i++) {
+                                ctx.beginPath();
+                                ctx.moveTo(landmarks[i][0], landmarks[i][1]);
+                                ctx.lineTo(landmarks[i + 1][0], landmarks[i + 1][1]);
+                                ctx.stroke();
+                            }
+                            
+                            // Draw points
+                            ctx.fillStyle = '#ffffff';
+                            landmarks.forEach(point => {
+                                ctx.beginPath();
+                                ctx.arc(point[0], point[1], 4, 0, 2 * Math.PI);
+                                ctx.fill();
+                            });
+    
+                            // Check for signs
+                            for (const [sign, config] of Object.entries(signs)) {
+                                if (config.check(landmarks)) {
+                                    detectedSignElement.textContent = `Detected Sign: ${sign}`;
+                                    if (window.socket) {
+                                        window.socket.emit('sign_language', {
+                                            sign,
+                                            sender: window.username || 'You'
+                                        });
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (error) {
+                        console.error('Error in sign detection:', error);
+                    }
+    
+                    requestId = requestAnimationFrame(detectSigns);
+                }
+    
+                // Initialize canvas size
+                function initializeCanvas() {
+                    canvas.width = canvas.offsetWidth;
+                    canvas.height = canvas.offsetHeight;
+                }
+    
+                // Toggle detection
+                toggleButton.addEventListener('click', () => {
+                    isActive = !isActive;
+                    canvas.classList.toggle('hidden');
+                    
+                    if (isActive) {
+                        toggleButton.innerHTML = '<i class="fas fa-pause"></i><span>Stop</span>';
+                        initializeCanvas();
+                        detectSigns();
+                    } else {
+                        toggleButton.innerHTML = '<i class="fas fa-hand"></i><span>Start</span>';
+                        if (requestId) {
+                            cancelAnimationFrame(requestId);
+                        }
+                        detectedSignElement.textContent = 'No sign detected';
+                    }
+                });
+    
+                // Initialize
+                toggleButton.disabled = true;
+                await initializeHandpose();
+    
+                // Handle window resize
+                window.addEventListener('resize', initializeCanvas);
             });
         </script>
 
