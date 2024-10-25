@@ -6,20 +6,120 @@ import {
   Calendar, MessageCircle, Activity, Book, User, Settings,
   Moon, Sun, Heart, Award, Bell, Clock, Sparkles, Brain,
   Zap, Fingerprint, TrendingUp, Target, Coffee, Music,
-  Focus, Smile, Cloud, Droplets, ChevronRight, BarChart2
+  Focus, Smile, Cloud, Droplets, ChevronRight, BarChart2,
+  Mic, MicOff // Added missing icons
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+
+const VoiceControl = ({ commands }) => {
+  const [isListening, setIsListening] = useState(false);
+  const [recognition, setRecognition] = useState(null);
+  const [error, setError] = useState(null); // Added error state
+
+  useEffect(() => {
+    let recognitionInstance = null;
+
+    try {
+      if ('webkitSpeechRecognition' in window) {
+        recognitionInstance = new window.webkitSpeechRecognition();
+        recognitionInstance.continuous = true;
+        recognitionInstance.interimResults = false;
+
+        recognitionInstance.onresult = (event) => {
+          const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
+          console.log('Voice command received:', command);
+
+          Object.entries(commands).forEach(([key, action]) => {
+            if (command.includes(key.toLowerCase())) {
+              action();
+            }
+          });
+        };
+
+        recognitionInstance.onerror = (event) => {
+          console.error('Speech recognition error:', event.error);
+          setError(event.error);
+          setIsListening(false);
+        };
+
+        recognitionInstance.onend = () => {
+          setIsListening(false);
+        };
+
+        setRecognition(recognitionInstance);
+      }
+    } catch (err) {
+      console.error('Speech recognition initialization error:', err);
+      setError(err.message);
+    }
+
+    return () => {
+      if (recognitionInstance) {
+        recognitionInstance.stop();
+      }
+    };
+  }, [commands]);
+
+  const toggleListening = () => {
+    if (error) {
+      alert('Speech recognition error: ' + error);
+      return;
+    }
+
+    if (!recognition) {
+      alert('Speech recognition is not supported in your browser');
+      return;
+    }
+
+    try {
+      if (isListening) {
+        recognition.stop();
+      } else {
+        recognition.start();
+      }
+      setIsListening(!isListening);
+    } catch (err) {
+      console.error('Error toggling speech recognition:', err);
+      setError(err.message);
+    }
+  };
+
+  return (
+    <motion.button
+      whileHover={{ scale: 1.1 }}
+      whileTap={{ scale: 0.9 }}
+      onClick={toggleListening}
+      className={`fixed bottom-8 right-8 p-4 rounded-full shadow-lg z-50
+        ${isListening ? 'bg-red-500 text-white' : 'bg-purple-500 text-white'}`}
+      aria-label={isListening ? 'Stop voice control' : 'Start voice control'}
+    >
+      {isListening ? (
+        <MicOff className="h-6 w-6" />
+      ) : (
+        <Mic className="h-6 w-6" />
+      )}
+    </motion.button>
+  );
+};
 
 const Dashboard = () => {
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
   const [activeSection, setActiveSection] = useState('overview');
-  const [theme, setTheme] = useState('light');
+  const [theme, setTheme] = useState(() =>
+    window.localStorage.getItem('theme') || 'light'
+  );
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedTimeframe, setSelectedTimeframe] = useState('week');
   const [selectedChart, setSelectedChart] = useState('mood');
+
+  // Persist theme preference
+  useEffect(() => {
+    window.localStorage.setItem('theme', theme);
+    document.documentElement.classList.toggle('dark', theme === 'dark');
+  }, [theme]);
 
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
@@ -37,12 +137,60 @@ const Dashboard = () => {
     { day: 'Sun', mood: 8, energy: 8, focus: 7, productivity: 75, sleep: 8, meditation: 25 },
   ]);
 
+  const voiceCommands = {
+    'get started': () => handleLogin(),
+    'contact therapist': () => {
+      try {
+        window.location.href = 'http://localhost:3005';
+      } catch (err) {
+        console.error('Navigation error:', err);
+      }
+    },
+    'ai therapist': () => {
+      try {
+        window.location.href = 'http://localhost:3001';
+      } catch (err) {
+        console.error('Navigation error:', err);
+      }
+    },
+    'therapy cards': () => navigate('/therapycards'),
+    'logout': () => handleLogout(),
+    'log mood': () => console.log('Logging mood'),
+    'start meditation': () => console.log('Starting meditation'),
+    'open journal': () => console.log('Opening journal'),
+    'start exercise': () => console.log('Starting exercise'),
+    'switch theme': () => setTheme(theme === 'light' ? 'dark' : 'light'),
+    'show daily': () => setSelectedTimeframe('day'),
+    'show weekly': () => setSelectedTimeframe('week'),
+    'show monthly': () => setSelectedTimeframe('month'),
+    'show yearly': () => setSelectedTimeframe('year'),
+    'show mood chart': () => setSelectedChart('mood'),
+    'show energy chart': () => setSelectedChart('energy'),
+    'show focus chart': () => setSelectedChart('focus')
+  };
+
+
   useEffect(() => {
-    setTimeout(() => setIsLoading(false), 1500);
+    const timer = setTimeout(() => setIsLoading(false), 1500);
+    return () => clearTimeout(timer);
   }, []);
 
   const handleLogin = () => {
-    navigate('/login');
+    try {
+      navigate('/login');
+    } catch (err) {
+      console.error('Navigation error:', err);
+    }
+  };
+
+  const handleLogout = () => {
+    try {
+      // Add your logout logic here
+      console.log('User logged out');
+      navigate('/login');
+    } catch (err) {
+      console.error('Logout error:', err);
+    }
   };
 
   const CustomBox = ({
@@ -290,6 +438,12 @@ const Dashboard = () => {
           ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white'
           : 'bg-gradient-to-br from-purple-50 to-indigo-50 text-gray-900'}`}
         >
+
+
+          {/* Voice Control */}
+          <VoiceControl commands={voiceCommands} />
+
+          
           <motion.div
             className="fixed top-0 left-0 right-0 h-1 bg-purple-500 transform-none z-50"
             style={{ scaleX }}
@@ -339,7 +493,7 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={()=> window.location.href = 'http://localhost:3001'}
+                  onClick={() => window.location.href = 'http://localhost:3001'}
                   className="px-4 py-2 rounded-xl bg-purple-100 dark:bg-purple-900/20 
                     text-purple-600 dark:text-purple-300 font-medium hover:shadow-md transition-shadow"
                 >
