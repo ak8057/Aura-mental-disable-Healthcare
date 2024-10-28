@@ -1,15 +1,48 @@
-import React, { useState, useEffect } from 'react';
-import { motion, AnimatePresence, useSpring, useScroll } from 'framer-motion';
-import { Line, Bar, AreaChart, Area, XAxis, YAxis, ResponsiveContainer, Tooltip, Legend } from 'recharts';
-import TherapyCards from './TherapyCards';
+import React, { useState, useEffect } from "react";
+import { motion, AnimatePresence, useSpring, useScroll } from "framer-motion";
 import {
-  Calendar, MessageCircle, Activity, Book, User, Settings,
-  Moon, Sun, Heart, Award, Bell, Clock, Sparkles, Brain,
-  Zap, Fingerprint, TrendingUp, Target, Coffee, Music,
-  Focus, Smile, Cloud, Droplets, ChevronRight, BarChart2,
-  Mic, MicOff // Added missing icons
-} from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+  Line,
+  Bar,
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  ResponsiveContainer,
+  Tooltip,
+  Legend,
+} from "recharts";
+import TherapyCards from "./TherapyCards";
+import {
+  Calendar,
+  MessageCircle,
+  Activity,
+  Book,
+  User,
+  Settings,
+  Moon,
+  Sun,
+  Heart,
+  Award,
+  Bell,
+  Clock,
+  Sparkles,
+  Brain,
+  Zap,
+  Fingerprint,
+  TrendingUp,
+  Target,
+  Coffee,
+  Music,
+  Focus,
+  Smile,
+  Cloud,
+  Droplets,
+  ChevronRight,
+  BarChart2,
+  Mic,
+  MicOff, // Added missing icons
+} from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 const VoiceControl = ({ commands }) => {
   const [isListening, setIsListening] = useState(false);
@@ -20,14 +53,16 @@ const VoiceControl = ({ commands }) => {
     let recognitionInstance = null;
 
     try {
-      if ('webkitSpeechRecognition' in window) {
+      if ("webkitSpeechRecognition" in window) {
         recognitionInstance = new window.webkitSpeechRecognition();
         recognitionInstance.continuous = true;
         recognitionInstance.interimResults = false;
 
         recognitionInstance.onresult = (event) => {
-          const command = event.results[event.results.length - 1][0].transcript.toLowerCase().trim();
-          console.log('Voice command received:', command);
+          const command = event.results[event.results.length - 1][0].transcript
+            .toLowerCase()
+            .trim();
+          console.log("Voice command received:", command);
 
           Object.entries(commands).forEach(([key, action]) => {
             if (command.includes(key.toLowerCase())) {
@@ -37,7 +72,7 @@ const VoiceControl = ({ commands }) => {
         };
 
         recognitionInstance.onerror = (event) => {
-          console.error('Speech recognition error:', event.error);
+          console.error("Speech recognition error:", event.error);
           setError(event.error);
           setIsListening(false);
         };
@@ -49,7 +84,7 @@ const VoiceControl = ({ commands }) => {
         setRecognition(recognitionInstance);
       }
     } catch (err) {
-      console.error('Speech recognition initialization error:', err);
+      console.error("Speech recognition initialization error:", err);
       setError(err.message);
     }
 
@@ -62,12 +97,12 @@ const VoiceControl = ({ commands }) => {
 
   const toggleListening = () => {
     if (error) {
-      alert('Speech recognition error: ' + error);
+      alert("Speech recognition error: " + error);
       return;
     }
 
     if (!recognition) {
-      alert('Speech recognition is not supported in your browser');
+      alert("Speech recognition is not supported in your browser");
       return;
     }
 
@@ -79,7 +114,7 @@ const VoiceControl = ({ commands }) => {
       }
       setIsListening(!isListening);
     } catch (err) {
-      console.error('Error toggling speech recognition:', err);
+      console.error("Error toggling speech recognition:", err);
       setError(err.message);
     }
   };
@@ -90,8 +125,8 @@ const VoiceControl = ({ commands }) => {
       whileTap={{ scale: 0.9 }}
       onClick={toggleListening}
       className={`fixed bottom-8 right-8 p-4 rounded-full shadow-lg z-50
-        ${isListening ? 'bg-red-500 text-white' : 'bg-purple-500 text-white'}`}
-      aria-label={isListening ? 'Stop voice control' : 'Start voice control'}
+        ${isListening ? "bg-red-500 text-white" : "bg-purple-500 text-white"}`}
+      aria-label={isListening ? "Stop voice control" : "Start voice control"}
     >
       {isListening ? (
         <MicOff className="h-6 w-6" />
@@ -105,74 +140,133 @@ const VoiceControl = ({ commands }) => {
 const Dashboard = () => {
   const navigate = useNavigate();
   const { scrollYProgress } = useScroll();
-  const [activeSection, setActiveSection] = useState('overview');
-  const [theme, setTheme] = useState(() =>
-    window.localStorage.getItem('theme') || 'light'
+  const [activeSection, setActiveSection] = useState("overview");
+  const [theme, setTheme] = useState(
+    () => window.localStorage.getItem("theme") || "light"
   );
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [selectedTimeframe, setSelectedTimeframe] = useState('week');
-  const [selectedChart, setSelectedChart] = useState('mood');
+  const [selectedTimeframe, setSelectedTimeframe] = useState("week");
+  const [selectedChart, setSelectedChart] = useState("mood");
 
   // Persist theme preference
   useEffect(() => {
-    window.localStorage.setItem('theme', theme);
-    document.documentElement.classList.toggle('dark', theme === 'dark');
+    window.localStorage.setItem("theme", theme);
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
   const scaleX = useSpring(scrollYProgress, {
     stiffness: 100,
     damping: 30,
-    restDelta: 0.001
+    restDelta: 0.001,
   });
 
   const [moodData] = useState([
-    { day: 'Mon', mood: 7, energy: 6, focus: 8, productivity: 75, sleep: 7.5, meditation: 20 },
-    { day: 'Tue', mood: 6, energy: 7, focus: 7, productivity: 80, sleep: 8, meditation: 15 },
-    { day: 'Wed', mood: 8, energy: 8, focus: 6, productivity: 85, sleep: 7, meditation: 25 },
-    { day: 'Thu', mood: 7, energy: 6, focus: 8, productivity: 70, sleep: 6.5, meditation: 10 },
-    { day: 'Fri', mood: 9, energy: 9, focus: 9, productivity: 90, sleep: 8.5, meditation: 30 },
-    { day: 'Sat', mood: 8, energy: 7, focus: 8, productivity: 65, sleep: 9, meditation: 20 },
-    { day: 'Sun', mood: 8, energy: 8, focus: 7, productivity: 75, sleep: 8, meditation: 25 },
+    {
+      day: "Mon",
+      mood: 7,
+      energy: 6,
+      focus: 8,
+      productivity: 75,
+      sleep: 7.5,
+      meditation: 20,
+    },
+    {
+      day: "Tue",
+      mood: 6,
+      energy: 7,
+      focus: 7,
+      productivity: 80,
+      sleep: 8,
+      meditation: 15,
+    },
+    {
+      day: "Wed",
+      mood: 8,
+      energy: 8,
+      focus: 6,
+      productivity: 85,
+      sleep: 7,
+      meditation: 25,
+    },
+    {
+      day: "Thu",
+      mood: 7,
+      energy: 6,
+      focus: 8,
+      productivity: 70,
+      sleep: 6.5,
+      meditation: 10,
+    },
+    {
+      day: "Fri",
+      mood: 9,
+      energy: 9,
+      focus: 9,
+      productivity: 90,
+      sleep: 8.5,
+      meditation: 30,
+    },
+    {
+      day: "Sat",
+      mood: 8,
+      energy: 7,
+      focus: 8,
+      productivity: 65,
+      sleep: 9,
+      meditation: 20,
+    },
+    {
+      day: "Sun",
+      mood: 8,
+      energy: 8,
+      focus: 7,
+      productivity: 75,
+      sleep: 8,
+      meditation: 25,
+    },
   ]);
 
   const handleMeditation = () => {
-    navigate('/meditate');
+    navigate("/meditate");
+  };
+
+  const handleExercise = () => {
+    navigate("/exercise");
   };
 
   const voiceCommands = {
-    'get started': () => handleLogin(),
-    'contact therapist': () => {
+    "get started": () => handleLogin(),
+    "contact therapist": () => {
       try {
-        window.location.href = 'http://localhost:3005';
+        window.location.href = "http://localhost:3005";
       } catch (err) {
-        console.error('Navigation error:', err);
+        console.error("Navigation error:", err);
       }
     },
-    'ai therapist': () => {
+    "ai therapist": () => {
       try {
-        window.location.href = 'http://localhost:3001';
+        window.location.href = "http://localhost:3001";
       } catch (err) {
-        console.error('Navigation error:', err);
+        console.error("Navigation error:", err);
       }
     },
-    'therapy cards': () => navigate('/therapycards'),
-    'logout': () => handleLogout(),
-    'log mood': () => console.log('Logging mood'),
-    'start meditation': () => navigate('/meditation'),
-    'open journal': () => console.log('Opening journal'),
-    'start exercise': () => console.log('Starting exercise'),
-    'switch theme': () => setTheme(theme === 'light' ? 'dark' : 'light'),
-    'show daily': () => setSelectedTimeframe('day'),
-    'show weekly': () => setSelectedTimeframe('week'),
-    'show monthly': () => setSelectedTimeframe('month'),
-    'show yearly': () => setSelectedTimeframe('year'),
-    'show mood chart': () => setSelectedChart('mood'),
-    'show energy chart': () => setSelectedChart('energy'),
-    'show focus chart': () => setSelectedChart('focus')
+    "therapy cards": () => navigate("/therapycards"),
+    logout: () => handleLogout(),
+    "log mood": () => console.log("Logging mood"),
+    "start meditation": () => navigate("/meditation"),
+    "open journal": () => console.log("Opening journal"),
+    "start exercise": () => console.log("Starting exercise"),
+    "switch theme": () => setTheme(theme === "light" ? "dark" : "light"),
+    "show daily": () => setSelectedTimeframe("day"),
+    "show weekly": () => setSelectedTimeframe("week"),
+    "show monthly": () => setSelectedTimeframe("month"),
+    "show yearly": () => setSelectedTimeframe("year"),
+    "show mood chart": () => setSelectedChart("mood"),
+    "show energy chart": () => setSelectedChart("energy"),
+    "show focus chart": () => setSelectedChart("focus"),
   };
-
 
   useEffect(() => {
     const timer = setTimeout(() => setIsLoading(false), 1500);
@@ -181,19 +275,19 @@ const Dashboard = () => {
 
   const handleLogin = () => {
     try {
-      navigate('/login');
+      navigate("/login");
     } catch (err) {
-      console.error('Navigation error:', err);
+      console.error("Navigation error:", err);
     }
   };
 
   const handleLogout = () => {
     try {
       // Add your logout logic here
-      console.log('User logged out');
-      navigate('/login');
+      console.log("User logged out");
+      navigate("/login");
     } catch (err) {
-      console.error('Logout error:', err);
+      console.error("Logout error:", err);
     }
   };
 
@@ -203,14 +297,18 @@ const Dashboard = () => {
     animate = true,
     hover = true,
     padding = "p-6",
-    onClick
+    onClick,
   }) => (
     <motion.div
-      whileHover={hover ? {
-        scale: 1.02,
-        y: -5,
-        transition: { duration: 0.2 }
-      } : {}}
+      whileHover={
+        hover
+          ? {
+              scale: 1.02,
+              y: -5,
+              transition: { duration: 0.2 },
+            }
+          : {}
+      }
       onClick={onClick}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
@@ -219,7 +317,7 @@ const Dashboard = () => {
         rounded-2xl shadow-lg backdrop-blur-lg 
         border border-gray-100 dark:border-gray-700 
         ${padding} ${className}
-        ${onClick ? 'cursor-pointer' : ''}
+        ${onClick ? "cursor-pointer" : ""}
       `}
     >
       {children}
@@ -241,7 +339,7 @@ const Dashboard = () => {
         transition={{
           duration: 2,
           repeat: Infinity,
-          ease: "easeInOut"
+          ease: "easeInOut",
         }}
         className="relative"
       >
@@ -252,13 +350,13 @@ const Dashboard = () => {
             boxShadow: [
               "0 0 20px rgba(139, 92, 246, 0.3)",
               "0 0 40px rgba(139, 92, 246, 0.6)",
-              "0 0 20px rgba(139, 92, 246, 0.3)"
-            ]
+              "0 0 20px rgba(139, 92, 246, 0.3)",
+            ],
           }}
           transition={{
             duration: 2,
             repeat: Infinity,
-            ease: "easeInOut"
+            ease: "easeInOut",
           }}
         />
       </motion.div>
@@ -271,15 +369,17 @@ const Dashboard = () => {
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
     >
-      {['day', 'week', 'month', 'year'].map((timeframe) => (
+      {["day", "week", "month", "year"].map((timeframe) => (
         <motion.button
           key={timeframe}
           whileHover={{ scale: 1.05 }}
           whileTap={{ scale: 0.95 }}
           className={`px-6 py-2 rounded-xl text-sm font-medium transition-colors
-            ${selectedTimeframe === timeframe
-              ? 'bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg'
-              : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300'}`}
+            ${
+              selectedTimeframe === timeframe
+                ? "bg-gradient-to-r from-purple-500 to-indigo-500 text-white shadow-lg"
+                : "bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300"
+            }`}
           onClick={() => setSelectedTimeframe(timeframe)}
         >
           {timeframe.charAt(0).toUpperCase() + timeframe.slice(1)}
@@ -309,10 +409,13 @@ const Dashboard = () => {
           <motion.div
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
-            className={`flex items-center space-x-1 ${trend > 0 ? 'text-green-500' : 'text-red-500'
-              }`}
+            className={`flex items-center space-x-1 ${
+              trend > 0 ? "text-green-500" : "text-red-500"
+            }`}
           >
-            <TrendingUp className={`h-4 w-4 ${trend < 0 ? 'transform rotate-180' : ''}`} />
+            <TrendingUp
+              className={`h-4 w-4 ${trend < 0 ? "transform rotate-180" : ""}`}
+            />
             <span className="text-sm font-medium">{Math.abs(trend)}%</span>
           </motion.div>
         )}
@@ -335,12 +438,12 @@ const Dashboard = () => {
           <motion.div
             animate={{
               y: [0, -5, 0],
-              rotate: [0, 5, 0]
+              rotate: [0, 5, 0],
             }}
             transition={{
               duration: 4,
               repeat: Infinity,
-              ease: "easeInOut"
+              ease: "easeInOut",
             }}
           >
             <Cloud className="h-8 w-8 text-blue-500" />
@@ -363,7 +466,10 @@ const Dashboard = () => {
       <div className="flex items-start justify-between">
         <div>
           <h3 className="text-lg font-semibold mb-2">Daily Insight</h3>
-          <p className="text-sm opacity-90">Your mood tends to be highest after meditation sessions. Consider adding an evening session to improve sleep quality.</p>
+          <p className="text-sm opacity-90">
+            Your mood tends to be highest after meditation sessions. Consider
+            adding an evening session to improve sleep quality.
+          </p>
         </div>
         <Sparkles className="h-6 w-6" />
       </div>
@@ -387,16 +493,18 @@ const Dashboard = () => {
           </p>
         </div>
         <div className="flex space-x-2">
-          {['mood', 'energy', 'focus'].map((metric) => (
+          {["mood", "energy", "focus"].map((metric) => (
             <motion.button
               key={metric}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               onClick={() => setSelectedChart(metric)}
               className={`px-3 py-1 rounded-lg text-sm font-medium
-                ${selectedChart === metric
-                  ? 'bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300'
-                  : 'text-gray-500 dark:text-gray-400'}`}
+                ${
+                  selectedChart === metric
+                    ? "bg-purple-100 text-purple-600 dark:bg-purple-900/30 dark:text-purple-300"
+                    : "text-gray-500 dark:text-gray-400"
+                }`}
             >
               {metric.charAt(0).toUpperCase() + metric.slice(1)}
             </motion.button>
@@ -415,10 +523,10 @@ const Dashboard = () => {
           <YAxis />
           <Tooltip
             contentStyle={{
-              backgroundColor: 'rgba(255, 255, 255, 0.9)',
-              borderRadius: '12px',
-              border: 'none',
-              boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)'
+              backgroundColor: "rgba(255, 255, 255, 0.9)",
+              borderRadius: "12px",
+              border: "none",
+              boxShadow: "0 4px 6px rgba(0, 0, 0, 0.1)",
             }}
           />
           <Area
@@ -438,16 +546,16 @@ const Dashboard = () => {
       {isLoading ? (
         <LoadingScreen />
       ) : (
-        <div className={`min-h-screen ${theme === 'dark'
-          ? 'bg-gradient-to-br from-gray-900 to-gray-800 text-white'
-          : 'bg-gradient-to-br from-purple-50 to-indigo-50 text-gray-900'}`}
+        <div
+          className={`min-h-screen ${
+            theme === "dark"
+              ? "bg-gradient-to-br from-gray-900 to-gray-800 text-white"
+              : "bg-gradient-to-br from-purple-50 to-indigo-50 text-gray-900"
+          }`}
         >
-
-
           {/* Voice Control */}
           <VoiceControl commands={voiceCommands} />
 
-          
           <motion.div
             className="fixed top-0 left-0 right-0 h-1 bg-purple-500 transform-none z-50"
             style={{ scaleX }}
@@ -466,8 +574,10 @@ const Dashboard = () => {
                 className="flex items-center space-x-3"
               >
                 <Brain className="h-8 w-8 text-purple-500" />
-                <span className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 
-                  text-transparent bg-clip-text">
+                <span
+                  className="text-xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 
+                  text-transparent bg-clip-text"
+                >
                   Aura+
                 </span>
               </motion.div>
@@ -477,7 +587,7 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => navigate('/therapycards')}
+                  onClick={() => navigate("/therapycards")}
                   className="px-4 py-2 rounded-xl bg-pink-100 dark:bg-pink-900/20 
                     text-pink-600 dark:text-pink-300 font-medium hover:shadow-md transition-shadow"
                 >
@@ -487,7 +597,9 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => window.location.href = 'http://localhost:3005'}
+                  onClick={() =>
+                    (window.location.href = "http://localhost:3005")
+                  }
                   className="px-4 py-2 rounded-xl bg-yellow-100 dark:bg-yellow-900/20 
     text-yellow-600 dark:text-yellow-300 font-medium hover:shadow-md transition-shadow"
                 >
@@ -497,7 +609,9 @@ const Dashboard = () => {
                 <motion.button
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={() => window.location.href = 'http://localhost:3001'}
+                  onClick={() =>
+                    (window.location.href = "http://localhost:3001")
+                  }
                   className="px-4 py-2 rounded-xl bg-purple-100 dark:bg-purple-900/20 
                     text-purple-600 dark:text-purple-300 font-medium hover:shadow-md transition-shadow"
                 >
@@ -517,10 +631,14 @@ const Dashboard = () => {
                   whileHover={{ scale: 1.1, rotate: 180 }}
                   whileTap={{ scale: 0.95 }}
                   transition={{ duration: 0.3 }}
-                  onClick={() => setTheme(theme === 'light' ? 'dark' : 'light')}
+                  onClick={() => setTheme(theme === "light" ? "dark" : "light")}
                   className="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                 >
-                  {theme === 'light' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+                  {theme === "light" ? (
+                    <Moon className="h-5 w-5" />
+                  ) : (
+                    <Sun className="h-5 w-5" />
+                  )}
                 </motion.button>
 
                 <motion.div
@@ -616,13 +734,31 @@ const Dashboard = () => {
               >
                 {/* Activity Feed */}
                 <CustomBox>
-                  <h3 className="text-lg font-semibold mb-4">Recent Activity</h3>
+                  <h3 className="text-lg font-semibold mb-4">
+                    Recent Activity
+                  </h3>
                   <div className="space-y-4">
                     {[
-                      { icon: Book, text: "Completed meditation session", time: "2h ago" },
-                      { icon: Activity, text: "Logged mood entry", time: "5h ago" },
-                      { icon: Coffee, text: "Morning routine completed", time: "8h ago" },
-                      { icon: Music, text: "Added to calm playlist", time: "1d ago" }
+                      {
+                        icon: Book,
+                        text: "Completed meditation session",
+                        time: "2h ago",
+                      },
+                      {
+                        icon: Activity,
+                        text: "Logged mood entry",
+                        time: "5h ago",
+                      },
+                      {
+                        icon: Coffee,
+                        text: "Morning routine completed",
+                        time: "8h ago",
+                      },
+                      {
+                        icon: Music,
+                        text: "Added to calm playlist",
+                        time: "1d ago",
+                      },
                     ].map((activity, index) => (
                       <motion.div
                         key={index}
@@ -634,7 +770,9 @@ const Dashboard = () => {
                         <activity.icon className="h-5 w-5 text-purple-500" />
                         <div className="flex-1">
                           <p className="text-sm font-medium">{activity.text}</p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">{activity.time}</p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {activity.time}
+                          </p>
                         </div>
                       </motion.div>
                     ))}
@@ -642,30 +780,39 @@ const Dashboard = () => {
                 </CustomBox>
 
                 {/* Quick Actions */}
-                  <CustomBox>
-    <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-    <div className="grid grid-cols-2 gap-4">
-      {[
-        { icon: Heart, label: "Log Mood" },
-        { icon: Brain, label: "Meditate", onClick: handleMeditation },
-        { icon: Book, label: "Journal" },
-        { icon: Activity, label: "Exercise" }
-      ].map((action, index) => (
-        <motion.button
-          key={index}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
-          onClick={action.onClick}
-          className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 
+                <CustomBox>
+                  <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    {[
+                      { icon: Heart, label: "Log Mood" },
+                      {
+                        icon: Brain,
+                        label: "Meditate",
+                        onClick: handleMeditation,
+                      },
+                      { icon: Book, label: "Journal" },
+                      {
+                        icon: Activity,
+                        label: "Exercise",
+                        onClick: handleExercise,
+                      },
+                    ].map((action, index) => (
+                      <motion.button
+                        key={index}
+                        whileHover={{ scale: 1.05 }}
+                        whileTap={{ scale: 0.95 }}
+                        onClick={action.onClick}
+                        className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 
             flex flex-col items-center space-y-2"
-        >
-          <action.icon className="h-6 w-6 text-purple-500" />
-          <span className="text-sm font-medium">{action.label}</span>
-        </motion.button>
-      ))}
-    </div>
-  </CustomBox>
-
+                      >
+                        <action.icon className="h-6 w-6 text-purple-500" />
+                        <span className="text-sm font-medium">
+                          {action.label}
+                        </span>
+                      </motion.button>
+                    ))}
+                  </div>
+                </CustomBox>
               </motion.div>
             </div>
           </div>
