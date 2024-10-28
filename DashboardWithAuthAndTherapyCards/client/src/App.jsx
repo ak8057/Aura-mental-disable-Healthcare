@@ -8,6 +8,7 @@ import TherapyCards from "./Pages/TherapyCards"; // Import TherapyCards
 import { useAuth } from "./contexts/AuthContext";
 import { Navigate } from "react-router-dom";
 import AccessibleMeditation from "./Pages/Meditation";
+import AccessExerciseHub from "./Pages/ExerciseHub";
 
 const App = () => {
   const { isAuthenticated } = useAuth();
@@ -24,7 +25,9 @@ const App = () => {
         />
         <Route
           path="/register"
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <Register />}
+          element={
+            isAuthenticated ? <Navigate to="/dashboard" /> : <Register />
+          }
         />
         <Route
           path="/dashboard"
@@ -38,6 +41,7 @@ const App = () => {
           path="/meditate"
           element={<AccessibleMeditation />} // Remove authentication check for this route
         />
+
         <Route path="/exercise" element={<AccessExerciseHub />} />
       </Routes>
     </Router>
