@@ -38,6 +38,7 @@ const App = () => {
           path="/meditate"
           element={<AccessibleMeditation />} // Remove authentication check for this route
         />
+        <Route path="/exercise" element={<AccessExerciseHub />} />
       </Routes>
     </Router>
   );
