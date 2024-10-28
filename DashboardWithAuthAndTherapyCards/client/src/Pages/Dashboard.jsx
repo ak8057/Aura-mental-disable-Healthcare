@@ -137,6 +137,10 @@ const Dashboard = () => {
     { day: 'Sun', mood: 8, energy: 8, focus: 7, productivity: 75, sleep: 8, meditation: 25 },
   ]);
 
+  const handleMeditation = () => {
+    navigate('/meditate');
+  };
+
   const voiceCommands = {
     'get started': () => handleLogin(),
     'contact therapist': () => {
@@ -156,7 +160,7 @@ const Dashboard = () => {
     'therapy cards': () => navigate('/therapycards'),
     'logout': () => handleLogout(),
     'log mood': () => console.log('Logging mood'),
-    'start meditation': () => console.log('Starting meditation'),
+    'start meditation': () => navigate('/meditation'),
     'open journal': () => console.log('Opening journal'),
     'start exercise': () => console.log('Starting exercise'),
     'switch theme': () => setTheme(theme === 'light' ? 'dark' : 'light'),
@@ -638,28 +642,30 @@ const Dashboard = () => {
                 </CustomBox>
 
                 {/* Quick Actions */}
-                <CustomBox>
-                  <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
-                  <div className="grid grid-cols-2 gap-4">
-                    {[
-                      { icon: Heart, label: "Log Mood" },
-                      { icon: Brain, label: "Meditate" },
-                      { icon: Book, label: "Journal" },
-                      { icon: Activity, label: "Exercise" }
-                    ].map((action, index) => (
-                      <motion.button
-                        key={index}
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 
-                          flex flex-col items-center space-y-2"
-                      >
-                        <action.icon className="h-6 w-6 text-purple-500" />
-                        <span className="text-sm font-medium">{action.label}</span>
-                      </motion.button>
-                    ))}
-                  </div>
-                </CustomBox>
+                  <CustomBox>
+    <h3 className="text-lg font-semibold mb-4">Quick Actions</h3>
+    <div className="grid grid-cols-2 gap-4">
+      {[
+        { icon: Heart, label: "Log Mood" },
+        { icon: Brain, label: "Meditate", onClick: handleMeditation },
+        { icon: Book, label: "Journal" },
+        { icon: Activity, label: "Exercise" }
+      ].map((action, index) => (
+        <motion.button
+          key={index}
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
+          onClick={action.onClick}
+          className="p-4 rounded-xl bg-purple-50 dark:bg-purple-900/20 
+            flex flex-col items-center space-y-2"
+        >
+          <action.icon className="h-6 w-6 text-purple-500" />
+          <span className="text-sm font-medium">{action.label}</span>
+        </motion.button>
+      ))}
+    </div>
+  </CustomBox>
+
               </motion.div>
             </div>
           </div>
