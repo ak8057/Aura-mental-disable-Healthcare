@@ -7,6 +7,7 @@ import Register from "./Auth/Register";
 import TherapyCards from "./Pages/TherapyCards"; // Import TherapyCards
 import { useAuth } from "./contexts/AuthContext";
 import { Navigate } from "react-router-dom";
+import AccessibleMeditation from "./Pages/Meditation";
 
 const App = () => {
   const { isAuthenticated } = useAuth();
@@ -32,6 +33,10 @@ const App = () => {
         <Route
           path="/therapycards"
           element={<TherapyCards />} // Remove authentication check for this route
+        />
+        <Route
+          path="/meditate"
+          element={<AccessibleMeditation />} // Remove authentication check for this route
         />
       </Routes>
     </Router>
